@@ -445,7 +445,7 @@ st.markdown(f"""
 # Footer
 st.markdown("""
 <div style="text-align:center;color:#94a3b8;font-size:0.875rem;padding:2rem 0;margin-top:2rem;border-top:1px solid rgba(255,255,255,0.1)">
-    <p style="margin-bottom:0.5rem">Feito com ❤️ usando IA • 100% Gratuito • Seus dados são privados</p>
+    <p style="margin-bottom:0.5rem"> 100% Gratuito • Seus dados são privados</p>
     <p>Desenvolvido por <a href="https://github.com/schenkel94" target="_blank" style="color:#6366f1;text-decoration:none;font-weight:500;transition:color 0.2s">Mário Schenkel</a></p>
 </div>
 """, unsafe_allow_html=True)

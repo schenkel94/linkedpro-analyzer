@@ -1,6 +1,6 @@
 import json
 import requests
-import time
+
 
 def analyze_profile(pdf_text, api_key, progress_callback=None):
     """
@@ -16,242 +16,201 @@ def analyze_profile(pdf_text, api_key, progress_callback=None):
     """
     return analyze_with_groq(pdf_text, api_key, progress_callback)
 
+
 def analyze_with_groq(pdf_text, api_key, progress_callback=None):
-    """Análise usando Groq API (Llama 3.1 70B)"""
-    
-    # Prompt otimizado para análise de LinkedIn
-    analysis_prompt = f"""Você é um especialista em otimização de perfis LinkedIn e recrutamento. Analise o perfil abaixo e retorne um JSON estruturado.
+    """Análise usando Groq API"""
 
-PERFIL LINKEDIN:
-{pdf_text[:6000]}
+    analysis_prompt = f"""
+Você é um **especialista sênior em recrutamento, personal branding e otimização estratégica de perfis LinkedIn**.
 
-INSTRUÇÕES CRÍTICAS:
-1. Analise o CONTEÚDO REAL do perfil acima
-2. Sugestões devem ser ESPECÍFICAS e PERSONALIZADAS baseadas no que a pessoa escreveu
-3. Cada dimensão deve ter EXATAMENTE 3 sugestões concisas e acionáveis
-4. Reescritas devem usar o conteúdo atual da pessoa como base, não criar do zero
-5. Seja crítico mas construtivo - scores devem refletir a realidade
-6. Identifique pontos fortes E fracos específicos do perfil
+Seu objetivo é realizar uma **análise profunda, estratégica e personalizada** do perfil abaixo.
 
-Retorne APENAS um JSON válido (sem markdown, sem explicações) com esta estrutura exata:
+A análise deve ir além de dicas superficiais: avalie **posicionamento profissional, clareza de valor, senioridade percebida, uso de keywords, storytelling e impacto profissional**.
+
+PERFIL LINKEDIN (extraído de PDF):
+
+{pdf_text[:15000]}
+
+DIRETRIZES DE ANÁLISE:
+
+1. Analise o **conteúdo real** do perfil.
+2. Cite **elementos específicos do perfil sempre que possível**.
+3. Seja **honesto e analítico**, não excessivamente generoso nas pontuações.
+4. Identifique **pontos fortes claros** do perfil.
+5. Identifique **oportunidades reais de melhoria**.
+6. Avalie o **posicionamento profissional da pessoa no mercado**.
+7. Avalie se o perfil comunica claramente:
+   - especialidade
+   - senioridade
+   - impacto profissional
+   - diferenciação no mercado.
+8. Sugestões devem ser **específicas, acionáveis e estratégicas**.
+9. As reescritas devem **manter a identidade profissional da pessoa**, apenas tornando o texto mais forte e claro.
+10. Seja **profissional, respeitoso e construtivo**.
+11. Você pode ser **analítico e crítico**, mas sempre com empatia.
+
+IMPORTANTE:
+
+Cada dimensão deve conter **EXATAMENTE 3 sugestões**.
+
+As sugestões devem:
+
+- ser específicas
+- ser aplicáveis
+- melhorar a percepção do perfil
+
+Se alguma seção estiver **ausente ou fraca**, explique claramente.
+
+Se o perfil estiver em outro idioma, traduza sua análise para português.
+
+Retorne **APENAS JSON VÁLIDO**, sem markdown, sem explicações.
+
+Estrutura obrigatória:
 
 {{
-  "overall_score": <número de 0-100 baseado na análise real>,
+  "overall_score": <0-100>,
   "dimensions": {{
     "headline": {{
       "title": "Headline & Primeira Impressão",
       "icon": "🎯",
       "score": <0-100>,
-      "analysis": "<2-3 frases sobre a headline ATUAL da pessoa, citando o que ela escreveu>",
+      "analysis": "<análise estratégica da headline atual: clareza de valor, keywords, impacto, diferenciação>",
       "suggestions": [
-        "<sugestão específica 1 baseada no conteúdo atual>",
-        "<sugestão específica 2 com exemplo concreto>",
-        "<sugestão específica 3 acionável>"
+        "<sugestão específica baseada no conteúdo atual>",
+        "<sugestão estratégica para melhorar posicionamento>",
+        "<sugestão prática para aumentar impacto>"
       ],
-      "rewrite": "<versão melhorada da headline ATUAL da pessoa, mantendo sua área e experiência>"
+      "rewrite": "<versão otimizada da headline mantendo a área e experiência da pessoa>"
     }},
     "about": {{
       "title": "Sobre / Resumo",
       "icon": "📝",
       "score": <0-100>,
-      "analysis": "<análise do resumo ATUAL, citando trechos específicos se houver>",
+      "analysis": "<análise da narrativa profissional: clareza, storytelling, autoridade, resultados>",
       "suggestions": [
-        "<sugestão específica 1>",
-        "<sugestão específica 2>",
-        "<sugestão específica 3>"
+        "<sugestão de melhoria narrativa>",
+        "<sugestão para incluir conquistas ou métricas>",
+        "<sugestão para melhorar posicionamento profissional>"
       ],
-      "rewrite": "<versão melhorada do resumo ATUAL, incorporando a história e experiência da pessoa>"
+      "rewrite": "<versão otimizada do resumo mantendo a essência da história profissional>"
     }},
     "experience": {{
       "title": "Experiências Profissionais",
       "icon": "💼",
       "score": <0-100>,
-      "analysis": "<análise das experiências ATUAIS listadas>",
+      "analysis": "<análise das experiências: clareza, foco em impacto, senioridade percebida>",
       "suggestions": [
-        "<sugestão específica para melhorar descrição de cargos>",
-        "<sugestão sobre adicionar métricas em funções específicas>",
-        "<sugestão sobre destacar conquistas reais>"
+        "<sugestão para melhorar descrição de impacto>",
+        "<sugestão para incluir resultados ou métricas>",
+        "<sugestão para melhorar narrativa de carreira>"
       ]
     }},
     "skills": {{
       "title": "Habilidades & Keywords",
       "icon": "🛠️",
       "score": <0-100>,
-      "analysis": "<análise das habilidades listadas ou faltantes>",
+      "analysis": "<análise da estratégia de habilidades e keywords>",
       "suggestions": [
-        "<sugestão sobre habilidades específicas da área da pessoa>",
-        "<sugestão sobre organização/priorização>",
-        "<sugestão sobre keywords relevantes para a indústria>"
+        "<sugestão de habilidades estratégicas>",
+        "<sugestão de reorganização>",
+        "<sugestão de keywords relevantes>"
       ]
     }},
     "visibility": {{
       "title": "Visibilidade & SEO",
       "icon": "👁️",
       "score": <0-100>,
-      "analysis": "<análise de completude e otimização para busca>",
+      "analysis": "<análise da otimização para busca e completude do perfil>",
       "suggestions": [
-        "<sugestão específica de SEO>",
+        "<sugestão para melhorar descoberta por recrutadores>",
         "<sugestão sobre seções faltantes>",
-        "<sugestão sobre URL personalizada>"
+        "<sugestão sobre otimização de perfil>"
       ]
     }}
   }},
   "priority_actions": [
-    {{"action": "<Ação 1 mais impactante baseada no perfil>", "impact": "Alto", "why": "<Por que isso vai fazer diferença para ESTE perfil especificamente>"}},
-    {{"action": "<Ação 2 específica>", "impact": "Alto", "why": "<Justificativa personalizada>"}},
-    {{"action": "<Ação 3>", "impact": "Médio", "why": "<Justificativa>"}},
-    {{"action": "<Ação 4>", "impact": "Médio", "why": "<Justificativa>"}},
-    {{"action": "<Ação 5>", "impact": "Baixo", "why": "<Justificativa>"}}
+    {{"action": "<ação mais impactante>", "impact": "Alto", "why": "<justificativa estratégica baseada no perfil>"}},
+    {{"action": "<segunda ação>", "impact": "Alto", "why": "<justificativa>"}},
+    {{"action": "<terceira ação>", "impact": "Médio", "why": "<justificativa>"}},
+    {{"action": "<quarta ação>", "impact": "Médio", "why": "<justificativa>"}},
+    {{"action": "<quinta ação>", "impact": "Baixo", "why": "<justificativa>"}}
   ]
 }}
-
-LEMBRE-SE:
-- Cite elementos ESPECÍFICOS do perfil da pessoa na análise
-- Se a headline atual é "Desenvolvedor Full Stack", sua reescrita deve ser baseada nisso
-- Se não houver resumo, sugira criar um baseado nas experiências listadas
-- Scores baixos para seções vazias, scores altos para seções bem desenvolvidas
-- Seja honesto nos scores - não seja generoso demais
 """
 
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    
+
     data = {
-        "model": "llama-3.3-70b-versatile",  # Modelo atualizado
+        "model": "llama-3.3-70b-versatile",
         "messages": [
             {
                 "role": "system",
-                "content": "Você é um especialista em LinkedIn e recrutamento. Retorne sempre JSON válido, sem markdown."
+                "content": "Você é um especialista em recrutamento e otimização de perfis LinkedIn. Retorne sempre JSON válido."
             },
             {
                 "role": "user",
                 "content": analysis_prompt
             }
         ],
-        "temperature": 0.7,
-        "max_tokens": 4000
+        "temperature": 0.8,
+        "max_tokens": 4500
     }
-    
+
     if progress_callback:
         progress_callback(0.3)
-    
+
     try:
+
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers=headers,
             json=data,
             timeout=60
         )
-        
+
         if progress_callback:
             progress_callback(0.6)
-        
+
         if response.status_code != 200:
             raise Exception(f"Erro na API Groq: {response.status_code} - {response.text}")
-        
+
         result = response.json()
-        content = result['choices'][0]['message']['content']
-        
-        # Limpar possível markdown
+        content = result["choices"][0]["message"]["content"]
+
+        # limpeza de markdown se existir
         content = content.strip()
-        if content.startswith('```json'):
+
+        if content.startswith("```json"):
             content = content[7:]
-        if content.startswith('```'):
+
+        if content.startswith("```"):
             content = content[3:]
-        if content.endswith('```'):
+
+        if content.endswith("```"):
             content = content[:-3]
+
         content = content.strip()
-        
-        # Parse JSON
+
         analysis_result = json.loads(content)
-        
+
         if progress_callback:
             progress_callback(1.0)
-        
+
         return analysis_result
-    
-    except json.JSONDecodeError as e:
-        # Fallback: estrutura básica
+
+    except json.JSONDecodeError:
         return create_fallback_analysis(pdf_text)
-    
+
     except Exception as e:
         raise Exception(f"Erro ao chamar Groq API: {str(e)}")
 
-def analyze_with_openai(pdf_text, api_key, progress_callback=None):
-    """Análise usando OpenAI GPT-4"""
-    
-    # Similar ao Groq, mas com endpoint OpenAI
-    analysis_prompt = f"""Você é um especialista em otimização de perfis LinkedIn. Analise o perfil abaixo e retorne um JSON estruturado.
-
-PERFIL:
-{pdf_text[:4000]}
-
-[Mesmo prompt do Groq...]
-"""
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "gpt-4",
-        "messages": [
-            {
-                "role": "system",
-                "content": "Você é um especialista em LinkedIn. Retorne sempre JSON válido."
-            },
-            {
-                "role": "user",
-                "content": analysis_prompt
-            }
-        ],
-        "temperature": 0.7,
-        "max_tokens": 3000
-    }
-    
-    if progress_callback:
-        progress_callback(0.3)
-    
-    try:
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers=headers,
-            json=data,
-            timeout=60
-        )
-        
-        if progress_callback:
-            progress_callback(0.6)
-        
-        if response.status_code != 200:
-            raise Exception(f"Erro na API OpenAI: {response.status_code}")
-        
-        result = response.json()
-        content = result['choices'][0]['message']['content']
-        
-        # Limpar e parsear
-        content = content.strip()
-        if content.startswith('```json'):
-            content = content[7:]
-        if content.endswith('```'):
-            content = content[:-3]
-        
-        analysis_result = json.loads(content)
-        
-        if progress_callback:
-            progress_callback(1.0)
-        
-        return analysis_result
-    
-    except Exception as e:
-        raise Exception(f"Erro ao chamar OpenAI API: {str(e)}")
 
 def create_fallback_analysis(pdf_text):
-    """Cria uma análise básica de fallback caso a IA falhe"""
-    
+    """Fallback caso a IA falhe"""
+
     return {
         "overall_score": 65,
         "dimensions": {
@@ -259,65 +218,65 @@ def create_fallback_analysis(pdf_text):
                 "title": "Headline & Primeira Impressão",
                 "icon": "🎯",
                 "score": 60,
-                "analysis": "Sua headline precisa ser mais específica e mostrar seu valor único. Evite títulos genéricos.",
+                "analysis": "Sua headline poderia comunicar melhor sua especialidade e proposta de valor.",
                 "suggestions": [
-                    "Inclua sua especialidade principal e nível de senioridade",
-                    "Adicione um resultado ou diferencial claro",
-                    "Use keywords relevantes para sua área de atuação"
+                    "Inclua sua especialidade principal e senioridade",
+                    "Adicione uma proposta de valor clara",
+                    "Inclua keywords estratégicas da sua área"
                 ],
-                "rewrite": "[Seu Cargo] | Especialista em [Área] | Ajudo empresas a [Resultado Específico]"
+                "rewrite": "[Seu Cargo] | Especialista em [Área] | Gerando impacto através de [Competência-chave]"
             },
             "about": {
                 "title": "Sobre / Resumo",
                 "icon": "📝",
                 "score": 65,
-                "analysis": "Seu resumo precisa contar uma história e mostrar seus resultados de forma clara.",
+                "analysis": "Seu resumo poderia contar melhor sua trajetória profissional e destacar resultados concretos.",
                 "suggestions": [
-                    "Comece com um gancho forte sobre sua trajetória",
-                    "Inclua 3-5 conquistas específicas com métricas",
-                    "Termine com call-to-action clara"
+                    "Comece com um posicionamento profissional claro",
+                    "Inclua conquistas mensuráveis",
+                    "Finalize com call-to-action"
                 ],
-                "rewrite": "Revise seu 'Sobre' para incluir storytelling, resultados quantificáveis e uma chamada para ação clara ao final."
+                "rewrite": "Profissional especializado em [área], com experiência em transformar dados e processos em decisões estratégicas."
             },
             "experience": {
                 "title": "Experiências Profissionais",
                 "icon": "💼",
                 "score": 70,
-                "analysis": "Suas experiências precisam focar mais em resultados do que em responsabilidades.",
+                "analysis": "Suas experiências poderiam enfatizar mais impacto e resultados.",
                 "suggestions": [
-                    "Use verbos de ação no início de cada bullet point",
-                    "Quantifique seus resultados com números e percentuais",
-                    "Mostre o impacto do seu trabalho nos resultados da empresa"
+                    "Use verbos de ação no início das descrições",
+                    "Adicione métricas de impacto",
+                    "Destaque projetos relevantes"
                 ]
             },
             "skills": {
                 "title": "Habilidades & Keywords",
                 "icon": "🛠️",
                 "score": 65,
-                "analysis": "Organize suas habilidades estrategicamente e busque endossos.",
+                "analysis": "Organizar habilidades estrategicamente pode melhorar sua descoberta por recrutadores.",
                 "suggestions": [
-                    "Priorize as 10 habilidades mais relevantes para seu objetivo",
-                    "Peça endossos de colegas e gestores antigos",
-                    "Adicione habilidades emergentes da sua área"
+                    "Priorize habilidades estratégicas",
+                    "Adicione competências emergentes",
+                    "Busque endossos relevantes"
                 ]
             },
             "visibility": {
                 "title": "Visibilidade & SEO",
                 "icon": "👁️",
                 "score": 60,
-                "analysis": "Seu perfil precisa de otimização para aparecer em mais buscas de recrutadores.",
+                "analysis": "Seu perfil pode ser melhor otimizado para buscas no LinkedIn.",
                 "suggestions": [
-                    "Use keywords estratégicas em headline, sobre e experiências",
-                    "Complete 100% do perfil (experiências, formação, certificações)",
+                    "Use keywords estratégicas nas seções principais",
+                    "Complete todas as seções do perfil",
                     "Personalize sua URL do LinkedIn"
                 ]
             }
         },
         "priority_actions": [
-            {"action": "Reescrever headline com foco em valor e resultados", "impact": "Alto", "why": "É a primeira coisa que recrutadores veem, impacta sua descoberta em buscas"},
-            {"action": "Adicionar métricas concretas nas descrições de cargo", "impact": "Alto", "why": "Resultados quantificados demonstram seu impacto real"},
-            {"action": "Completar seção 'Sobre' com storytelling", "impact": "Alto", "why": "Aumenta conexão emocional e mostra sua trajetória"},
-            {"action": "Reorganizar habilidades por relevância", "impact": "Médio", "why": "Melhora SEO e aparece melhor para recrutadores"},
-            {"action": "Personalizar URL do perfil", "impact": "Baixo", "why": "Mais profissional e fácil de compartilhar"}
+            {"action": "Melhorar headline com posicionamento claro", "impact": "Alto", "why": "Impacta diretamente a primeira impressão e busca"},
+            {"action": "Adicionar métricas de impacto nas experiências", "impact": "Alto", "why": "Resultados quantificados aumentam credibilidade"},
+            {"action": "Reescrever resumo com storytelling profissional", "impact": "Alto", "why": "Melhora conexão e narrativa de carreira"},
+            {"action": "Otimizar habilidades estratégicas", "impact": "Médio", "why": "Melhora SEO no LinkedIn"},
+            {"action": "Completar otimizações de perfil", "impact": "Baixo", "why": "Aumenta profissionalismo geral"}
         ]
     }

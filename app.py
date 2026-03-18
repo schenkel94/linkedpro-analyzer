@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime
 from utils.pdf_parser import extract_text_from_pdf
 from utils.linkedin_analyzer import analyze_profile
+import base64
 
 # API Key do Groq (configurada pelo admin)
 GROQ_API_KEY = "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"
@@ -14,12 +15,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Função para carregar imagem como base64
+def get_image_base64(image_path):
+    try:
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except:
+        return None
+
 # CSS customizado - Estilo ZenOffice
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Reset e Base */
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
@@ -29,7 +37,6 @@ st.markdown("""
         color: #e2e8f0;
     }
     
-    /* Header Principal */
     .hero-header {
         text-align: center;
         padding: 2.5rem 2rem 2rem;
@@ -49,15 +56,13 @@ st.markdown("""
     }
     
     .hero-header p {
-        font-size: 1rem;
+        font-size: 0.75rem;
         color: rgba(255, 255, 255, 0.8);
         font-weight: 400;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        font-size: 0.75rem;
     }
     
-    /* Botões */
     .stButton > button {
         background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         color: white;
@@ -66,7 +71,6 @@ st.markdown("""
         padding: 1rem 2rem;
         font-size: 1rem;
         font-weight: 600;
-        cursor: pointer;
         transition: all 0.2s ease;
         box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         width: 100%;
@@ -78,7 +82,6 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
     }
     
-    /* Score Badges */
     .score-badge {
         display: inline-block;
         padding: 0.5rem 1.2rem;
@@ -89,28 +92,15 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .score-excellent {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
+    .score-excellent { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .score-good { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+    .score-needs-work { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
     
-    .score-good {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-    }
-    
-    .score-needs-work {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-    }
-    
-    /* Progress Bar */
     .stProgress > div > div > div {
         background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         border-radius: 10px;
     }
     
-    /* File Uploader */
     .stFileUploader {
         background: rgba(255, 255, 255, 0.03);
         border: 2px dashed rgba(79, 70, 229, 0.4);
@@ -120,12 +110,6 @@ st.markdown("""
         transition: all 0.2s ease;
     }
     
-    .stFileUploader:hover {
-        border-color: rgba(79, 70, 229, 0.6);
-        background: rgba(255, 255, 255, 0.05);
-    }
-    
-    /* Stats */
     .stat-box {
         background: rgba(255, 255, 255, 0.05);
         padding: 1.5rem;
@@ -133,11 +117,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
         margin: 1rem 0;
         transition: all 0.2s ease;
-    }
-    
-    .stat-box:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateY(-2px);
     }
     
     .stat-number {
@@ -155,19 +134,12 @@ st.markdown("""
         margin-top: 0.5rem;
     }
     
-    /* Dimension Card */
     .dimension-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
         padding: 1.5rem;
         margin: 1rem 0;
-        transition: all 0.2s ease;
-    }
-    
-    .dimension-card:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(99, 102, 241, 0.3);
     }
     
     .dimension-title {
@@ -187,86 +159,58 @@ st.markdown("""
         line-height: 1.5;
     }
     
-    /* Botão de Café Flutuante */
-    .cafe-button {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        z-index: 999;
-    }
-    
-    .cafe-button a {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        padding: 0.875rem 1.5rem;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
-        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
-        transition: all 0.2s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .cafe-button a:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4);
-    }
-    
-    /* Link do Perfil */
-    .profile-link {
-        text-align: center;
-        margin-top: 2rem;
+    .projects-section {
+        margin-top: 4rem;
         padding-top: 2rem;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .profile-link a {
-        color: #6366f1;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 0.9rem;
+    .projects-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .project-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem;
         transition: all 0.2s ease;
+        text-align: center;
     }
     
-    .profile-link a:hover {
-        color: #818cf8;
+    .project-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-4px);
     }
     
-    /* Hide Streamlit Branding */
+    .project-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin: 1rem 0 0.5rem;
+    }
+    
+    .project-description {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+    
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 6px;
-    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background-color: #4f46e5; border-radius: 10px; }
     
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background-color: #4f46e5;
-        border-radius: 10px;
-    }
-    
-    /* Expander sem setinha */
-    details {
-        border: none !important;
-    }
-    
-    summary {
-        list-style: none !important;
-    }
-    
-    summary::-webkit-details-marker {
-        display: none !important;
-    }
+    details { border: none !important; }
+    summary { list-style: none !important; }
+    summary::-webkit-details-marker { display: none !important; }
     
     .streamlit-expanderHeader {
         background: rgba(255, 255, 255, 0.03);
@@ -294,7 +238,6 @@ if 'analysis_complete' not in st.session_state:
 if not st.session_state.analysis_complete:
     st.markdown("### 📤 Faça upload do PDF do seu perfil LinkedIn")
     
-    # Instruções para baixar PDF
     with st.expander("📥 Como baixar o PDF do seu perfil LinkedIn?", expanded=False):
         st.markdown("""
         **Passo a passo simples:**
@@ -304,29 +247,23 @@ if not st.session_state.analysis_complete:
         3. Selecione **"Salvar como PDF"**
         4. Faça o download do arquivo
         5. Faça upload aqui abaixo! 🎯
-        
-        *O processo leva menos de 1 minuto!*
         """)
     
-    # Upload do PDF
     uploaded_file = st.file_uploader(
         "📄 Selecione o PDF do seu perfil LinkedIn",
         type=['pdf'],
         help="Aceita apenas arquivos PDF baixados do LinkedIn"
     )
     
-    # Botão de análise
     if uploaded_file:
         if st.button("🚀 Analisar Meu Perfil Agora!", key="analyze_btn", use_container_width=True):
-            with st.spinner("🔍 Analisando seu perfil... Isso leva cerca de 10-15 segundos..."):
+            with st.spinner("🔍 Analisando seu perfil..."):
                 try:
-                    # Extrair texto do PDF
                     pdf_text = extract_text_from_pdf(uploaded_file)
                     
                     if len(pdf_text) < 100:
-                        st.error("O PDF parece estar vazio ou corrompido. Tente baixar novamente do LinkedIn.")
+                        st.error("O PDF parece estar vazio. Tente baixar novamente.")
                     else:
-                        # Analisar com IA usando Groq
                         progress_bar = st.progress(0)
                         
                         analysis_result = analyze_profile(
@@ -340,8 +277,7 @@ if not st.session_state.analysis_complete:
                         st.rerun()
                         
                 except Exception as e:
-                    st.error(f"❌ Erro na análise: {str(e)}")
-                    st.info("Tente novamente em alguns segundos. Se o problema persistir, entre em contato.")
+                    st.error(f"❌ Erro: {str(e)}")
 
 # Mostrar resultado
 if st.session_state.analysis_complete and 'analysis_result' in st.session_state:
@@ -350,163 +286,101 @@ if st.session_state.analysis_complete and 'analysis_result' in st.session_state:
     st.markdown("---")
     st.markdown("## 📊 Sua Análise Completa")
     
-    # Score Geral
     overall_score = result.get('overall_score', 0)
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(f"""
-        <div class="stat-box">
-            <div class="stat-number">{overall_score}/100</div>
-            <div class="stat-label">Score Geral</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
+        st.markdown(f'<div class="stat-box"><div class="stat-number">{overall_score}/100</div><div class="stat-label">Score Geral</div></div>', unsafe_allow_html=True)
     with col2:
-        improvement_potential = 100 - overall_score
-        st.markdown(f"""
-        <div class="stat-box">
-            <div class="stat-number">+{improvement_potential}%</div>
-            <div class="stat-label">Potencial de Melhoria</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
+        st.markdown(f'<div class="stat-box"><div class="stat-number">+{100-overall_score}%</div><div class="stat-label">Potencial</div></div>', unsafe_allow_html=True)
     with col3:
-        priority_items = len(result.get('priority_actions', []))
-        st.markdown(f"""
-        <div class="stat-box">
-            <div class="stat-number">{priority_items}</div>
-            <div class="stat-label">Ações Prioritárias</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-box"><div class="stat-number">{len(result.get("priority_actions",[]))}</div><div class="stat-label">Ações</div></div>', unsafe_allow_html=True)
     
-    # Análises por dimensão
-    st.markdown("### 🎯 Análise Detalhada por Dimensão")
+    st.markdown("### 🎯 Análise Detalhada")
     
-    dimensions = result.get('dimensions', {})
-    
-    for dim_name, dim_data in dimensions.items():
-        # Card de dimensão
+    for dim_name, dim_data in result.get('dimensions', {}).items():
         score = dim_data['score']
-        if score >= 80:
-            badge_class = "score-excellent"
-            status = "Excelente! ✨"
-        elif score >= 60:
-            badge_class = "score-good"
-            status = "Bom, mas pode melhorar 💪"
-        else:
-            badge_class = "score-needs-work"
-            status = "Precisa de atenção 🎯"
+        badge_class = "score-excellent" if score >= 80 else "score-good" if score >= 60 else "score-needs-work"
+        status = "Excelente! ✨" if score >= 80 else "Bom 💪" if score >= 60 else "Atenção 🎯"
         
-        st.markdown(f"""
-        <div class="dimension-card">
-            <div class="dimension-title">{dim_data['icon']} {dim_data['title']}</div>
-            <span class="score-badge {badge_class}">{score}/100 - {status}</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Análise
+        st.markdown(f'<div class="dimension-card"><div class="dimension-title">{dim_data["icon"]} {dim_data["title"]}</div><span class="score-badge {badge_class}">{score}/100 - {status}</span></div>', unsafe_allow_html=True)
         st.markdown("**📝 Análise:**")
         st.markdown(dim_data['analysis'])
         
-        # Sugestões em cards
         if dim_data.get('suggestions'):
-            st.markdown("**💡 Ações Recomendadas:**")
+            st.markdown("**💡 Ações:**")
             for suggestion in dim_data['suggestions']:
-                st.markdown(f"""
-                <div class="suggestion-item">
-                    ✓ {suggestion}
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div class="suggestion-item">✓ {suggestion}</div>', unsafe_allow_html=True)
         
-        # Reescrita (se disponível)
         if dim_data.get('rewrite'):
-            st.markdown("**✨ Sugestão Personalizada:**")
+            st.markdown("**✨ Sugestão:**")
             st.code(dim_data['rewrite'], language=None)
-        
-        st.markdown("")  # Espaço entre cards
+        st.markdown("")
     
-    # Checklist Priorizado
-    st.markdown("### ✅ Checklist de Ações Prioritárias")
-    st.markdown("*Execute nesta ordem para máximo impacto:*")
-    
+    st.markdown("### ✅ Checklist Prioritário")
     for i, action in enumerate(result.get('priority_actions', []), 1):
-        st.markdown(f"""
-        <div class="suggestion-item">
-            <strong>{i}. {action['action']}</strong> - Impacto: {action['impact']}<br>
-            <em>{action['why']}</em>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="suggestion-item"><strong>{i}. {action["action"]}</strong> - {action["impact"]}<br><em>{action["why"]}</em></div>', unsafe_allow_html=True)
     
-    # Download do resultado
     st.markdown("---")
-    st.markdown("### 📥 Salvar Análise")
-    
-    # Criar markdown para download
-    download_content = f"""# Análise LinkedPro
-    
-## Score Geral: {overall_score}/100
-
-## Análises Detalhadas
-
-"""
-    for dim_name, dim_data in dimensions.items():
-        download_content += f"\n### {dim_data['title']} ({dim_data['score']}/100)\n\n"
-        download_content += f"{dim_data['analysis']}\n\n"
-        if dim_data.get('suggestions'):
-            download_content += "**Ações Recomendadas:**\n"
-            for suggestion in dim_data['suggestions']:
-                download_content += f"- {suggestion}\n"
-        if dim_data.get('rewrite'):
-            download_content += f"\n**Sugestão Personalizada:**\n{dim_data['rewrite']}\n"
-        download_content += "\n"
-    
-    download_content += "\n## Checklist Prioritário\n\n"
-    for i, action in enumerate(result.get('priority_actions', []), 1):
-        download_content += f"{i}. {action['action']} (Impacto: {action['impact']})\n"
-        download_content += f"   {action['why']}\n\n"
-    
-    st.download_button(
-        label="📄 Baixar Análise Completa (Markdown)",
-        data=download_content,
-        file_name=f"linkedin_analysis_{datetime.now().strftime('%Y%m%d')}.md",
-        mime="text/markdown",
-        use_container_width=True
-    )
-    
-    # CTA Final
-    st.markdown("---")
-    st.markdown("""
-    ### 🎉 Gostou da análise?
-    
-    Compartilhe com seus amigos que também querem melhorar seus perfis no LinkedIn!
-    
-    **LinkedPro Analyzer** - 100% Gratuito, sempre! 🚀
-    """)
+    download_content = f"# Análise LinkedPro\n\n## Score: {overall_score}/100\n\n"
+    st.download_button("📄 Baixar Análise", download_content, f"linkedin_analysis_{datetime.now().strftime('%Y%m%d')}.md", "text/markdown", use_container_width=True)
     
     if st.button("🔄 Analisar Outro Perfil", use_container_width=True):
         st.session_state.analysis_complete = False
-        st.session_state.analysis_result = None
         st.rerun()
 
-# Botão de Café Flutuante (estilo ZenOffice)
-st.markdown("""
-<div class="cafe-button">
-    <a href="https://buymeacoffee.com/marioschenkel" target="_blank">
-        ☕ Pagar um Café
-    </a>
-</div>
+# Seção Projetos
+st.markdown('<div class="projects-section"><h2 class="projects-title">🚀 Outros Projetos</h2></div>', unsafe_allow_html=True)
+
+# Tentar carregar capa do ZenOffice
+zen_img = get_image_base64("capa_zenoffice.png")
+img_html = f'<img src="data:image/png;base64,{zen_img}" style="width:100%;border-radius:12px;margin-bottom:1rem">' if zen_img else '<div style="width:100%;height:200px;background:rgba(99,102,241,0.2);border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;justify-center;color:#6366f1;font-size:3rem;">⏱️</div>'
+
+st.markdown(f"""
+<a href="https://zenoffice.netlify.app" target="_blank" style="text-decoration:none">
+    <div class="project-card">
+        {img_html}
+        <div class="project-name">ZenOffice</div>
+        <div class="project-description">
+            App de produtividade focado em bem-estar. Timer Pomodoro, tarefas, sons ambientes e respiração guiada.
+        </div>
+    </div>
+</a>
 """, unsafe_allow_html=True)
 
-# Footer com link do perfil
+# Modal de Apoio
 st.markdown("---")
+with st.expander("☕ Apoiar o Desenvolvedor", expanded=False):
+    tab1, tab2 = st.tabs(["💰 Apoiar", "👤 Sobre"])
+    
+    with tab1:
+        qr_img = get_image_base64("qr.png")
+        if qr_img:
+            st.markdown(f'<div style="text-align:center"><img src="data:image/png;base64,{qr_img}" style="max-width:240px;background:white;padding:1.5rem;border-radius:16px"></div>', unsafe_allow_html=True)
+        
+        pix_key = "df15a204-0a95-45da-8df5-c63ae7e9022e"
+        st.code(pix_key, language=None)
+        if st.button("📋 Copiar Chave PIX", use_container_width=True):
+            st.success("✅ Chave copiada!")
+    
+    with tab2:
+        profile_img = get_image_base64("profile.png")
+        if profile_img:
+            st.markdown(f'<div style="text-align:center"><img src="data:image/png;base64,{profile_img}" style="width:120px;height:120px;border-radius:50%;border:3px solid rgba(99,102,241,0.3)"></div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="text-align:center;margin-top:1.5rem">
+            <h3 style="color:#6366f1">Mário Schenkel</h3>
+            <p style="color:#94a3b8;font-size:0.875rem">Criador do ZenOffice</p>
+            <p style="color:#cbd5e1;font-size:0.875rem;line-height:1.6">Focado em criar soluções que trazem paz e produtividade.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div style="text-align:center;margin-top:1rem"><a href="https://linkedin.com/in/marioschenkel" target="_blank" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;padding:0.75rem 2rem;border-radius:12px;text-decoration:none;display:inline-block;font-weight:600">LinkedIn</a></div>', unsafe_allow_html=True)
+
+# Footer
 st.markdown("""
-<div class="profile-link">
-    <p style='color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem;'>
-        100% Gratuito • Seus dados são privados • Ao acessar você concorda com o uso de cookies
-    </p>
-    <a href="https://linkedin.com/in/marioschenkel" target="_blank">
-        👤 Desenvolvido por Mario Schenkel
-    </a>
+<div style="text-align:center;color:#94a3b8;font-size:0.875rem;padding:2rem 0;margin-top:2rem;border-top:1px solid rgba(255,255,255,0.1)">
+    <p>Feito com ❤️ usando IA • 100% Gratuito • Seus dados são privados</p>
 </div>
 """, unsafe_allow_html=True)

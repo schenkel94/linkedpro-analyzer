@@ -109,7 +109,7 @@ Seja CRÍTICO mas CONSTRUTIVO. Scores devem refletir a realidade (não seja gene
     }
     
     data = {
-        "model": "llama-3.1-70b-versatile",
+        "model": "llama-3.3-70b-versatile",  # Modelo atualizado
         "messages": [
             {
                 "role": "system",

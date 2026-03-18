@@ -2,24 +2,19 @@ import json
 import requests
 import time
 
-def analyze_profile(pdf_text, api_key, api_choice="Groq (Recomendado - Grátis)", progress_callback=None):
+def analyze_profile(pdf_text, api_key, progress_callback=None):
     """
-    Analisa perfil LinkedIn usando IA (Groq ou OpenAI)
+    Analisa perfil LinkedIn usando Groq API
     
     Args:
         pdf_text: Texto extraído do PDF
-        api_key: Chave da API
-        api_choice: "Groq (Recomendado - Grátis)" ou "OpenAI GPT-4"
+        api_key: Chave da API Groq
         progress_callback: Função para atualizar progresso
         
     Returns:
         dict: Resultado da análise estruturado
     """
-    
-    if "Groq" in api_choice:
-        return analyze_with_groq(pdf_text, api_key, progress_callback)
-    else:
-        return analyze_with_openai(pdf_text, api_key, progress_callback)
+    return analyze_with_groq(pdf_text, api_key, progress_callback)
 
 def analyze_with_groq(pdf_text, api_key, progress_callback=None):
     """Análise usando Groq API (Llama 3.1 70B)"""

@@ -86,7 +86,7 @@ st.markdown("""
         border-radius: 30px;
         font-weight: 600;
         font-size: 1.2rem;
-        margin: 0.5rem;
+        margin: 0.5rem 0;
     }
     
     .score-excellent {
@@ -119,14 +119,6 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: rgba(255, 107, 53, 0.1);
-        border-radius: 12px;
-        font-weight: 600;
-        color: #ff6b35;
-    }
-    
     /* Stats */
     .stat-box {
         background: rgba(255, 255, 255, 0.08);
@@ -150,10 +142,51 @@ st.markdown("""
         letter-spacing: 0.1em;
     }
     
+    /* Dimension Card */
+    .dimension-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+    }
+    
+    .dimension-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #ff6b35;
+    }
+    
+    .suggestion-item {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border-left: 3px solid #ff6b35;
+    }
+    
     /* Hide Streamlit Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* Remove expander arrows */
+    .streamlit-expanderHeader {
+        pointer-events: none;
+    }
+    
+    details {
+        border: none !important;
+    }
+    
+    summary {
+        list-style: none !important;
+    }
+    
+    summary::-webkit-details-marker {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -170,56 +203,57 @@ if 'analysis_complete' not in st.session_state:
     st.session_state.analysis_complete = False
 
 # Upload e Análise
-st.markdown("### 📤 Faça upload do PDF do seu perfil LinkedIn")
-
-# Instruções para baixar PDF
-with st.expander("📥 Como baixar o PDF do seu perfil LinkedIn?", expanded=False):
-    st.markdown("""
-    **Passo a passo simples:**
+if not st.session_state.analysis_complete:
+    st.markdown("### 📤 Faça upload do PDF do seu perfil LinkedIn")
     
-    1. Acesse seu perfil no LinkedIn (linkedin.com/in/seu-perfil)
-    2. Clique em **"Mais"** (abaixo da sua foto)
-    3. Selecione **"Salvar como PDF"**
-    4. Faça o download do arquivo
-    5. Faça upload aqui abaixo! 🎯
+    # Instruções para baixar PDF
+    with st.expander("📥 Como baixar o PDF do seu perfil LinkedIn?", expanded=False):
+        st.markdown("""
+        **Passo a passo simples:**
+        
+        1. Acesse seu perfil no LinkedIn (linkedin.com/in/seu-perfil)
+        2. Clique em **"Mais"** (abaixo da sua foto)
+        3. Selecione **"Salvar como PDF"**
+        4. Faça o download do arquivo
+        5. Faça upload aqui abaixo! 🎯
+        
+        *O processo leva menos de 1 minuto!*
+        """)
     
-    *O processo leva menos de 1 minuto!*
-    """)
-
-# Upload do PDF
-uploaded_file = st.file_uploader(
-    "📄 Selecione o PDF do seu perfil LinkedIn",
-    type=['pdf'],
-    help="Aceita apenas arquivos PDF baixados do LinkedIn"
-)
-
-# Botão de análise
-if uploaded_file:
-    if st.button("🚀 Analisar Meu Perfil Agora!", key="analyze_btn", use_container_width=True):
-        with st.spinner("🔍 Analisando seu perfil... Isso leva cerca de 10-15 segundos..."):
-            try:
-                # Extrair texto do PDF
-                pdf_text = extract_text_from_pdf(uploaded_file)
-                
-                if len(pdf_text) < 100:
-                    st.error("O PDF parece estar vazio ou corrompido. Tente baixar novamente do LinkedIn.")
-                else:
-                    # Analisar com IA usando Groq
-                    progress_bar = st.progress(0)
+    # Upload do PDF
+    uploaded_file = st.file_uploader(
+        "📄 Selecione o PDF do seu perfil LinkedIn",
+        type=['pdf'],
+        help="Aceita apenas arquivos PDF baixados do LinkedIn"
+    )
+    
+    # Botão de análise
+    if uploaded_file:
+        if st.button("🚀 Analisar Meu Perfil Agora!", key="analyze_btn", use_container_width=True):
+            with st.spinner("🔍 Analisando seu perfil... Isso leva cerca de 10-15 segundos..."):
+                try:
+                    # Extrair texto do PDF
+                    pdf_text = extract_text_from_pdf(uploaded_file)
                     
-                    analysis_result = analyze_profile(
-                        pdf_text, 
-                        GROQ_API_KEY,
-                        progress_callback=progress_bar.progress
-                    )
-                    
-                    st.session_state.analysis_result = analysis_result
-                    st.session_state.analysis_complete = True
-                    st.rerun()
-                    
-            except Exception as e:
-                st.error(f"❌ Erro na análise: {str(e)}")
-                st.info("Tente novamente em alguns segundos. Se o problema persistir, entre em contato.")
+                    if len(pdf_text) < 100:
+                        st.error("O PDF parece estar vazio ou corrompido. Tente baixar novamente do LinkedIn.")
+                    else:
+                        # Analisar com IA usando Groq
+                        progress_bar = st.progress(0)
+                        
+                        analysis_result = analyze_profile(
+                            pdf_text, 
+                            GROQ_API_KEY,
+                            progress_callback=progress_bar.progress
+                        )
+                        
+                        st.session_state.analysis_result = analysis_result
+                        st.session_state.analysis_complete = True
+                        st.rerun()
+                        
+                except Exception as e:
+                    st.error(f"❌ Erro na análise: {str(e)}")
+                    st.info("Tente novamente em alguns segundos. Se o problema persistir, entre em contato.")
 
 # Mostrar resultado
 if st.session_state.analysis_complete and 'analysis_result' in st.session_state:
@@ -258,51 +292,66 @@ if st.session_state.analysis_complete and 'analysis_result' in st.session_state:
         </div>
         """, unsafe_allow_html=True)
     
-    # Análises por dimensão
+    # Análises por dimensão - SEM EXPANDERS
     st.markdown("### 🎯 Análise Detalhada por Dimensão")
     
     dimensions = result.get('dimensions', {})
     
     for dim_name, dim_data in dimensions.items():
-        with st.expander(f"**{dim_data['icon']} {dim_data['title']}** - Score: {dim_data['score']}/100", expanded=True):
-            # Badge de score
-            score = dim_data['score']
-            if score >= 80:
-                badge_class = "score-excellent"
-                status = "Excelente! ✨"
-            elif score >= 60:
-                badge_class = "score-good"
-                status = "Bom, mas pode melhorar 💪"
-            else:
-                badge_class = "score-needs-work"
-                status = "Precisa de atenção 🎯"
-            
-            st.markdown(f'<span class="score-badge {badge_class}">{score}/100 - {status}</span>', unsafe_allow_html=True)
-            
-            # Análise
-            st.markdown("**📝 Análise:**")
-            st.markdown(dim_data['analysis'])
-            
-            # Sugestões
-            if dim_data.get('suggestions'):
-                st.markdown("**💡 Sugestões de Melhoria:**")
-                for suggestion in dim_data['suggestions']:
-                    st.markdown(f"- {suggestion}")
-            
-            # Reescrita (se disponível)
-            if dim_data.get('rewrite'):
-                st.markdown("**✨ Versão Reescrita (pronta para copiar):**")
-                st.code(dim_data['rewrite'], language=None)
+        # Card de dimensão
+        score = dim_data['score']
+        if score >= 80:
+            badge_class = "score-excellent"
+            status = "Excelente! ✨"
+        elif score >= 60:
+            badge_class = "score-good"
+            status = "Bom, mas pode melhorar 💪"
+        else:
+            badge_class = "score-needs-work"
+            status = "Precisa de atenção 🎯"
+        
+        st.markdown(f"""
+        <div class="dimension-card">
+            <div class="dimension-title">{dim_data['icon']} {dim_data['title']}</div>
+            <span class="score-badge {badge_class}">{score}/100 - {status}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Análise
+        st.markdown("**📝 Análise:**")
+        st.markdown(dim_data['analysis'])
+        
+        # Sugestões em cards
+        if dim_data.get('suggestions'):
+            st.markdown("**💡 Ações Recomendadas:**")
+            for suggestion in dim_data['suggestions']:
+                st.markdown(f"""
+                <div class="suggestion-item">
+                    ✓ {suggestion}
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Reescrita (se disponível)
+        if dim_data.get('rewrite'):
+            st.markdown("**✨ Sugestão Personalizada:**")
+            st.code(dim_data['rewrite'], language=None)
+        
+        st.markdown("")  # Espaço entre cards
     
     # Checklist Priorizado
     st.markdown("### ✅ Checklist de Ações Prioritárias")
-    st.markdown("*Faça nesta ordem para máximo impacto:*")
+    st.markdown("*Execute nesta ordem para máximo impacto:*")
     
     for i, action in enumerate(result.get('priority_actions', []), 1):
-        st.markdown(f"{i}. **{action['action']}** - Impacto: {action['impact']}")
-        st.markdown(f"   *{action['why']}*")
+        st.markdown(f"""
+        <div class="suggestion-item">
+            <strong>{i}. {action['action']}</strong> - Impacto: {action['impact']}<br>
+            <em>{action['why']}</em>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Download do resultado
+    st.markdown("---")
     st.markdown("### 📥 Salvar Análise")
     
     # Criar markdown para download
@@ -317,14 +366,17 @@ if st.session_state.analysis_complete and 'analysis_result' in st.session_state:
         download_content += f"\n### {dim_data['title']} ({dim_data['score']}/100)\n\n"
         download_content += f"{dim_data['analysis']}\n\n"
         if dim_data.get('suggestions'):
-            download_content += "**Sugestões:**\n"
+            download_content += "**Ações Recomendadas:**\n"
             for suggestion in dim_data['suggestions']:
                 download_content += f"- {suggestion}\n"
+        if dim_data.get('rewrite'):
+            download_content += f"\n**Sugestão Personalizada:**\n{dim_data['rewrite']}\n"
         download_content += "\n"
     
     download_content += "\n## Checklist Prioritário\n\n"
     for i, action in enumerate(result.get('priority_actions', []), 1):
         download_content += f"{i}. {action['action']} (Impacto: {action['impact']})\n"
+        download_content += f"   {action['why']}\n\n"
     
     st.download_button(
         label="📄 Baixar Análise Completa (Markdown)",

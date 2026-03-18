@@ -23,84 +23,94 @@ def analyze_with_groq(pdf_text, api_key, progress_callback=None):
     analysis_prompt = f"""Você é um especialista em otimização de perfis LinkedIn e recrutamento. Analise o perfil abaixo e retorne um JSON estruturado.
 
 PERFIL LINKEDIN:
-{pdf_text[:4000]}
+{pdf_text[:6000]}
+
+INSTRUÇÕES CRÍTICAS:
+1. Analise o CONTEÚDO REAL do perfil acima
+2. Sugestões devem ser ESPECÍFICAS e PERSONALIZADAS baseadas no que a pessoa escreveu
+3. Cada dimensão deve ter EXATAMENTE 3 sugestões concisas e acionáveis
+4. Reescritas devem usar o conteúdo atual da pessoa como base, não criar do zero
+5. Seja crítico mas construtivo - scores devem refletir a realidade
+6. Identifique pontos fortes E fracos específicos do perfil
 
 Retorne APENAS um JSON válido (sem markdown, sem explicações) com esta estrutura exata:
 
 {{
-  "overall_score": <número de 0-100>,
+  "overall_score": <número de 0-100 baseado na análise real>,
   "dimensions": {{
     "headline": {{
       "title": "Headline & Primeira Impressão",
       "icon": "🎯",
       "score": <0-100>,
-      "analysis": "<análise de 2-3 frases>",
-      "suggestions": ["sugestão 1", "sugestão 2", "sugestão 3"],
-      "rewrite": "<versão reescrita da headline>"
+      "analysis": "<2-3 frases sobre a headline ATUAL da pessoa, citando o que ela escreveu>",
+      "suggestions": [
+        "<sugestão específica 1 baseada no conteúdo atual>",
+        "<sugestão específica 2 com exemplo concreto>",
+        "<sugestão específica 3 acionável>"
+      ],
+      "rewrite": "<versão melhorada da headline ATUAL da pessoa, mantendo sua área e experiência>"
     }},
     "about": {{
       "title": "Sobre / Resumo",
       "icon": "📝",
       "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."],
-      "rewrite": "<versão reescrita do sobre>"
+      "analysis": "<análise do resumo ATUAL, citando trechos específicos se houver>",
+      "suggestions": [
+        "<sugestão específica 1>",
+        "<sugestão específica 2>",
+        "<sugestão específica 3>"
+      ],
+      "rewrite": "<versão melhorada do resumo ATUAL, incorporando a história e experiência da pessoa>"
     }},
     "experience": {{
       "title": "Experiências Profissionais",
       "icon": "💼",
       "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."]
+      "analysis": "<análise das experiências ATUAIS listadas>",
+      "suggestions": [
+        "<sugestão específica para melhorar descrição de cargos>",
+        "<sugestão sobre adicionar métricas em funções específicas>",
+        "<sugestão sobre destacar conquistas reais>"
+      ]
     }},
     "skills": {{
       "title": "Habilidades & Keywords",
       "icon": "🛠️",
       "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."]
+      "analysis": "<análise das habilidades listadas ou faltantes>",
+      "suggestions": [
+        "<sugestão sobre habilidades específicas da área da pessoa>",
+        "<sugestão sobre organização/priorização>",
+        "<sugestão sobre keywords relevantes para a indústria>"
+      ]
     }},
     "visibility": {{
       "title": "Visibilidade & SEO",
       "icon": "👁️",
       "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."]
-    }},
-    "engagement": {{
-      "title": "Potencial de Engajamento",
-      "icon": "🔥",
-      "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."]
-    }},
-    "ats": {{
-      "title": "Otimização para ATS",
-      "icon": "🤖",
-      "score": <0-100>,
-      "analysis": "<análise>",
-      "suggestions": ["...", "...", "..."]
+      "analysis": "<análise de completude e otimização para busca>",
+      "suggestions": [
+        "<sugestão específica de SEO>",
+        "<sugestão sobre seções faltantes>",
+        "<sugestão sobre URL personalizada>"
+      ]
     }}
   }},
   "priority_actions": [
-    {{"action": "Ação 1", "impact": "Alto", "why": "Explicação curta"}},
-    {{"action": "Ação 2", "impact": "Alto", "why": "Explicação curta"}},
-    {{"action": "Ação 3", "impact": "Médio", "why": "Explicação curta"}},
-    {{"action": "Ação 4", "impact": "Médio", "why": "Explicação curta"}},
-    {{"action": "Ação 5", "impact": "Baixo", "why": "Explicação curta"}}
+    {{"action": "<Ação 1 mais impactante baseada no perfil>", "impact": "Alto", "why": "<Por que isso vai fazer diferença para ESTE perfil especificamente>"}},
+    {{"action": "<Ação 2 específica>", "impact": "Alto", "why": "<Justificativa personalizada>"}},
+    {{"action": "<Ação 3>", "impact": "Médio", "why": "<Justificativa>"}},
+    {{"action": "<Ação 4>", "impact": "Médio", "why": "<Justificativa>"}},
+    {{"action": "<Ação 5>", "impact": "Baixo", "why": "<Justificativa>"}}
   ]
 }}
 
-CRITÉRIOS DE AVALIAÇÃO:
-- Headline: Clareza, keywords, diferenciação
-- Sobre: Storytelling, CTAs, valor oferecido
-- Experiência: Métricas, verbos de ação, resultados
-- Habilidades: Relevância, quantidade, endossos
-- Visibilidade: Keywords SEO, completude do perfil
-- Engajamento: Chamadas para ação, redes sociais
-- ATS: Formatação, keywords, compatibilidade
-
-Seja CRÍTICO mas CONSTRUTIVO. Scores devem refletir a realidade (não seja generoso demais).
+LEMBRE-SE:
+- Cite elementos ESPECÍFICOS do perfil da pessoa na análise
+- Se a headline atual é "Desenvolvedor Full Stack", sua reescrita deve ser baseada nisso
+- Se não houver resumo, sugira criar um baseado nas experiências listadas
+- Scores baixos para seções vazias, scores altos para seções bem desenvolvidas
+- Seja honesto nos scores - não seja generoso demais
 """
 
     headers = {
@@ -251,11 +261,11 @@ def create_fallback_analysis(pdf_text):
                 "score": 60,
                 "analysis": "Sua headline precisa ser mais específica e mostrar seu valor único. Evite títulos genéricos.",
                 "suggestions": [
-                    "Inclua sua especialidade principal",
-                    "Adicione resultados ou diferencial",
-                    "Use keywords relevantes para sua área"
+                    "Inclua sua especialidade principal e nível de senioridade",
+                    "Adicione um resultado ou diferencial claro",
+                    "Use keywords relevantes para sua área de atuação"
                 ],
-                "rewrite": "[Sua Especialidade] | Ajudo [Público-Alvo] a [Resultado Específico]"
+                "rewrite": "[Seu Cargo] | Especialista em [Área] | Ajudo empresas a [Resultado Específico]"
             },
             "about": {
                 "title": "Sobre / Resumo",
@@ -263,11 +273,11 @@ def create_fallback_analysis(pdf_text):
                 "score": 65,
                 "analysis": "Seu resumo precisa contar uma história e mostrar seus resultados de forma clara.",
                 "suggestions": [
-                    "Comece com um gancho forte",
-                    "Inclua métricas e resultados",
-                    "Termine com call-to-action"
+                    "Comece com um gancho forte sobre sua trajetória",
+                    "Inclua 3-5 conquistas específicas com métricas",
+                    "Termine com call-to-action clara"
                 ],
-                "rewrite": "Revise seu 'Sobre' para incluir storytelling, resultados quantificáveis e uma chamada para ação clara."
+                "rewrite": "Revise seu 'Sobre' para incluir storytelling, resultados quantificáveis e uma chamada para ação clara ao final."
             },
             "experience": {
                 "title": "Experiências Profissionais",
@@ -275,9 +285,9 @@ def create_fallback_analysis(pdf_text):
                 "score": 70,
                 "analysis": "Suas experiências precisam focar mais em resultados do que em responsabilidades.",
                 "suggestions": [
-                    "Use verbos de ação no início",
-                    "Quantifique seus resultados",
-                    "Mostre o impacto do seu trabalho"
+                    "Use verbos de ação no início de cada bullet point",
+                    "Quantifique seus resultados com números e percentuais",
+                    "Mostre o impacto do seu trabalho nos resultados da empresa"
                 ]
             },
             "skills": {
@@ -286,8 +296,8 @@ def create_fallback_analysis(pdf_text):
                 "score": 65,
                 "analysis": "Organize suas habilidades estrategicamente e busque endossos.",
                 "suggestions": [
-                    "Priorize habilidades mais relevantes",
-                    "Peça endossos de colegas",
+                    "Priorize as 10 habilidades mais relevantes para seu objetivo",
+                    "Peça endossos de colegas e gestores antigos",
                     "Adicione habilidades emergentes da sua área"
                 ]
             },
@@ -295,41 +305,19 @@ def create_fallback_analysis(pdf_text):
                 "title": "Visibilidade & SEO",
                 "icon": "👁️",
                 "score": 60,
-                "analysis": "Seu perfil precisa de otimização para aparecer em mais buscas.",
+                "analysis": "Seu perfil precisa de otimização para aparecer em mais buscas de recrutadores.",
                 "suggestions": [
-                    "Use keywords estratégicas",
-                    "Complete 100% do perfil",
-                    "Mantenha perfil em inglês + português"
-                ]
-            },
-            "engagement": {
-                "title": "Potencial de Engajamento",
-                "icon": "🔥",
-                "score": 55,
-                "analysis": "Aumente suas chances de ser contatado com CTAs claros.",
-                "suggestions": [
-                    "Adicione formas de contato",
-                    "Crie senso de urgência",
-                    "Mostre disponibilidade"
-                ]
-            },
-            "ats": {
-                "title": "Otimização para ATS",
-                "icon": "🤖",
-                "score": 70,
-                "analysis": "Seu perfil está razoavelmente otimizado para sistemas ATS.",
-                "suggestions": [
-                    "Use termos padrão da indústria",
-                    "Evite formatações complexas",
-                    "Inclua certificações"
+                    "Use keywords estratégicas em headline, sobre e experiências",
+                    "Complete 100% do perfil (experiências, formação, certificações)",
+                    "Personalize sua URL do LinkedIn"
                 ]
             }
         },
         "priority_actions": [
-            {"action": "Reescrever headline com foco em resultados", "impact": "Alto", "why": "Primeira coisa que recrutadores veem"},
-            {"action": "Adicionar métricas nas experiências", "impact": "Alto", "why": "Mostra seu impacto real"},
-            {"action": "Completar seção 'Sobre' com storytelling", "impact": "Alto", "why": "Aumenta conexão emocional"},
-            {"action": "Reorganizar habilidades por relevância", "impact": "Médio", "why": "Melhora SEO do perfil"},
-            {"action": "Adicionar call-to-action", "impact": "Médio", "why": "Facilita contato de recrutadores"}
+            {"action": "Reescrever headline com foco em valor e resultados", "impact": "Alto", "why": "É a primeira coisa que recrutadores veem, impacta sua descoberta em buscas"},
+            {"action": "Adicionar métricas concretas nas descrições de cargo", "impact": "Alto", "why": "Resultados quantificados demonstram seu impacto real"},
+            {"action": "Completar seção 'Sobre' com storytelling", "impact": "Alto", "why": "Aumenta conexão emocional e mostra sua trajetória"},
+            {"action": "Reorganizar habilidades por relevância", "impact": "Médio", "why": "Melhora SEO e aparece melhor para recrutadores"},
+            {"action": "Personalizar URL do perfil", "impact": "Baixo", "why": "Mais profissional e fácil de compartilhar"}
         ]
     }

@@ -1,4 +1,4 @@
-import PyPDF2
+from pypdf import PdfReader
 from io import BytesIO
 
 def extract_text_from_pdf(uploaded_file):
@@ -16,7 +16,7 @@ def extract_text_from_pdf(uploaded_file):
         pdf_file = BytesIO(uploaded_file.read())
         
         # Criar leitor de PDF
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        pdf_reader = PdfReader(pdf_file)
         
         # Extrair texto de todas as páginas
         text = ""

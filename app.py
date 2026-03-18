@@ -503,7 +503,7 @@ st.markdown("---")
 st.markdown("""
 <div class="profile-link">
     <p style='color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem;'>
-        100% Gratuito • Seus dados são privados • Ao acessar você concorda com o uso de cookies • Desenvolvido por Mario Schenkel
+        100% Gratuito • Seus dados são privados • Ao acessar você concorda com o uso de cookies
     </p>
     <a href="https://linkedin.com/in/marioschenkel" target="_blank">
         👤 Desenvolvido por Mario Schenkel
